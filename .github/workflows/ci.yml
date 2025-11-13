@@ -20,28 +20,31 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      # Levantar backend en background
+      # Start backend server
       - name: Start backend
         run: |
           nohup yarn start:api &
         shell: bash
 
-      # Levantar frontend con Vite en modo desarrollo
+      # Start frontend dev server
       - name: Start frontend
         run: |
           nohup yarn start:react &
         shell: bash
 
-      # Esperar a que el servidor esté levantado
+      # Wait until frontend is ready
       - name: Wait for server
         run: npx wait-on http://localhost:3000
 
+      # Run unit tests
       - name: Run unit tests
         run: yarn test:unit
 
+      # Run Cypress tests (FORCED TO USE THE CORRECT CONFIG FILE)
       - name: Run Cypress tests
-        run: yarn cypress:run
+        run: yarn cypress:run --config-file cypress.config.js
 
+      # Save screenshots if tests fail
       - name: Upload artifacts (screenshots)
         if: always()
         uses: actions/upload-artifact@v4
@@ -49,6 +52,7 @@ jobs:
           name: cypress-screenshots
           path: cypress/screenshots
 
+      # SonarCloud analysis
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
         env:
