@@ -8,12 +8,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    services:
-      mongo:
-        image: mongo:4.4
-        ports:
-          - 27017:27017
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -26,19 +20,19 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Build frontend
-        run: yarn build
-
+      # Levantar backend en background
       - name: Start backend
         run: |
           nohup yarn start:api &
         shell: bash
 
+      # Levantar frontend con Vite en modo desarrollo
       - name: Start frontend
         run: |
-          nohup yarn preview &
+          nohup yarn start:react &
         shell: bash
 
+      # Esperar a que el servidor esté levantado
       - name: Wait for server
         run: npx wait-on http://localhost:3000
 
@@ -62,5 +56,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           args: >
-            -Dsonar.projectKey=PROYECTO_KEY
-            -Dsonar.organization=ORG_KEY
+            -Dsonar.projectKey=TATT07_cypress-realworld-app
+            -Dsonar.organization=TATT07
