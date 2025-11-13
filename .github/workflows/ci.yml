@@ -2,7 +2,8 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   test:
@@ -17,48 +18,47 @@ jobs:
         with:
           node-version: 20
 
+      # Install dependencies
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      # Start backend server
-      - name: Start backend
+      # Build frontend (React)
+      - name: Build frontend
         run: |
-          nohup yarn start:api &
-        shell: bash
+          yarn types
+          yarn build
 
-      # Start frontend dev server
+      # Start backend
+      - name: Start backend
+        run: nohup yarn start:api &
+        
+      # Start frontend (React)
       - name: Start frontend
-        run: |
-          nohup yarn start:react &
-        shell: bash
+        run: nohup yarn start:react &
 
       # Wait until frontend is ready
       - name: Wait for server
         run: npx wait-on http://localhost:3000
 
-      # Run unit tests
+      # Run Vitest tests
       - name: Run unit tests
         run: yarn test:unit
 
-      # Run Cypress tests (FORCED TO USE THE CORRECT CONFIG FILE)
+      # Run Cypress tests using CI config
       - name: Run Cypress tests
-        run: yarn cypress:run --config-file cypress.config.js
+        run: yarn cypress:run --config-file cypress.ci.config.js
 
-      # Save screenshots if tests fail
+      # Upload screenshots if exist
       - name: Upload artifacts (screenshots)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cypress-screenshots
+          name: cypress-artifacts
           path: cypress/screenshots
 
-      # SonarCloud analysis
+      # SonarCloud scan
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          args: >
-            -Dsonar.projectKey=TATT07_cypress-realworld-app
-            -Dsonar.organization=TATT07
