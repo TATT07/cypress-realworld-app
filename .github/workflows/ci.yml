@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-  pull_request:
 
 jobs:
   test:
@@ -13,45 +12,57 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
+      # Install dependencies
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
+      # Build frontend
       - name: Build frontend
         run: |
           yarn types
           yarn build
 
+      # Start backend
       - name: Start backend
         run: nohup yarn start:api &
 
+      # Start frontend
       - name: Start frontend
         run: nohup yarn start:react &
 
-      - name: Wait for frontend
+      # Wait server
+      - name: Wait for server
         run: npx wait-on http://localhost:3000
 
+      # Run unit tests
       - name: Run unit tests
         run: yarn test:unit
 
+      # Run Cypress tests
       - name: Run Cypress tests
         env:
           CYPRESS_apiUrl: http://localhost:3001
         run: yarn cypress:run --config-file cypress.ci.config.js
 
-      - name: Upload artifacts (screenshots)
+      # Upload screenshots
+      - name: Upload artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: cypress-artifacts
           path: cypress/screenshots
 
-      # ✅ AQUÍ VA SONARCLOUD — ESTO ES LO QUE ME PEDISTE
+      # -----------------------------
+      # 🚀 SONARCLOUD ANALYSIS
+      # -----------------------------
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
         env:
