@@ -9,6 +9,10 @@ export default defineConfig({
     baseUrl: "http://localhost:3000",
     specPattern: "cypress/tests/ui/**/*.spec.ts",
 
+    env: {
+      apiUrl: "http://localhost:3001", // <--- ESTA LÍNEA ES LA CLAVE
+    },
+
     setupNodeEvents(on, config) {
       const testDataApiEndpoint = `${config.env.apiUrl}/testData`;
 
@@ -23,7 +27,6 @@ export default defineConfig({
           : fetchData(query);
       };
 
-      // ⭐⭐⭐ REGISTRO REAL que te falta
       on("task", {
         async "db:seed"() {
           const { data } = await axios.post(`${testDataApiEndpoint}/seed`);

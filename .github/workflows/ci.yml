@@ -31,7 +31,7 @@ jobs:
       # Start backend
       - name: Start backend
         run: nohup yarn start:api &
-        
+
       # Start frontend (React)
       - name: Start frontend
         run: nohup yarn start:react &
@@ -44,8 +44,10 @@ jobs:
       - name: Run unit tests
         run: yarn test:unit
 
-      # Run Cypress tests using CI config
+      # Run Cypress tests using CI config (FIX FINAL)
       - name: Run Cypress tests
+        env:
+          CYPRESS_apiUrl: http://localhost:3001
         run: yarn cypress:run --config-file cypress.ci.config.js
 
       # Upload screenshots if exist
