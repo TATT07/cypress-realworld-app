@@ -1,9 +1,47 @@
+// cypress.ci.config.js
 import { defineConfig } from "cypress";
+import axios from "axios";
+import Promise from "bluebird";
+import _ from "lodash";
 
 export default defineConfig({
   e2e: {
-    specPattern: "cypress/tests/ui/**/*.spec.ts",
     baseUrl: "http://localhost:3000",
-    video: false
-  }
+    specPattern: "cypress/tests/ui/**/*.spec.ts",
+
+    setupNodeEvents(on, config) {
+      const testDataApiEndpoint = `${config.env.apiUrl}/testData`;
+
+      const queryDatabase = ({ entity, query }, callback) => {
+        const fetchData = async (attrs) => {
+          const { data } = await axios.get(`${testDataApiEndpoint}/${entity}`);
+          return callback(data, attrs);
+        };
+
+        return Array.isArray(query)
+          ? Promise.map(query, fetchData)
+          : fetchData(query);
+      };
+
+      // ⭐⭐⭐ REGISTRO REAL que te falta
+      on("task", {
+        async "db:seed"() {
+          const { data } = await axios.post(`${testDataApiEndpoint}/seed`);
+          return data;
+        },
+        "filter:database"(queryPayload) {
+          return queryDatabase(queryPayload, (data, attrs) =>
+            _.filter(data.results, attrs)
+          );
+        },
+        "find:database"(queryPayload) {
+          return queryDatabase(queryPayload, (data, attrs) =>
+            _.find(data.results, attrs)
+          );
+        },
+      });
+
+      return config;
+    },
+  },
 });
