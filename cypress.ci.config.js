@@ -1,16 +1,30 @@
 const { defineConfig } = require("cypress");
+const axios = require("axios");
 
 module.exports = defineConfig({
   e2e: {
-    baseUrl: "http://localhost:3000", // Frontend en CI
+    baseUrl: "http://localhost:3000",
+
     env: {
-      apiUrl: "http://localhost:3001", // Backend correcto para db:seed
+      apiUrl: "http://localhost:3001",
     },
+
     specPattern: "cypress/tests/ui/**/*.spec.ts",
-    video: false,
-    screenshotOnRunFailure: true,
-    defaultCommandTimeout: 8000,
-    requestTimeout: 8000,
-    responseTimeout: 8000,
+
+    setupNodeEvents(on, config) {
+      on("task", {
+        async "db:seed"() {
+          try {
+            await axios.post(`${config.env.apiUrl}/testData/seed`);
+            return true;
+          } catch (error) {
+            console.error("❌ ERROR en db:seed:", error);
+            throw error;
+          }
+        },
+      });
+
+      return config;
+    },
   },
 });
