@@ -98,6 +98,7 @@ if (process.env.VITE_GOOGLE) {
 app.get("/", (req, res) => {
   res.send("Cypress Realworld App - backend");
 });
+
 app.use("/graphql", gqlPlaygroundRoutes);
 app.use(
   "/graphql",
@@ -108,6 +109,7 @@ app.use(
     },
   })
 );
+
 app.use("/users", userRoutes);
 app.use("/contacts", contactRoutes);
 app.use("/bankAccounts", bankAccountRoutes);
@@ -119,6 +121,23 @@ app.use("/bankTransfers", bankTransferRoutes);
 
 app.use(express.static(join(__dirname, "../public")));
 
-getBackendPort().then((port) => {
-  app.listen(port);
-});
+/*  
+  🔥 FIX CRÍTICO PARA GITHUB ACTIONS
+  Hace que el backend escuche en 0.0.0.0 en lugar de localhost.
+  Así Cypress puede conectarse correctamente.
+*/
+getBackendPort()
+  .then((port) => {
+    const finalPort = port || 3001;
+
+    app.listen(finalPort, "0.0.0.0", () => {
+      console.log(`Backend running on port ${finalPort} (0.0.0.0)`);
+    });
+  })
+  .catch(() => {
+    const fallbackPort = 3001;
+
+    app.listen(fallbackPort, "0.0.0.0", () => {
+      console.log(`Backend fallback running on port ${fallbackPort} (0.0.0.0)`);
+    });
+  });
