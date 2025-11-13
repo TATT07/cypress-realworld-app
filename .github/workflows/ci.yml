@@ -4,57 +4,46 @@ on:
   push:
     branches:
       - main
+  pull_request:
 
 jobs:
   test:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Descargar repo
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      # 2. Configurar Node 20
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      # 3. Instalar dependencias
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      # 4. Build frontend
       - name: Build frontend
         run: |
           yarn types
           yarn build
 
-      # 5. Iniciar backend en puerto 3001
       - name: Start backend
-        env:
-          PORT: 3001
         run: nohup yarn start:api &
 
-      # 6. Iniciar frontend en puerto 3000
       - name: Start frontend
         run: nohup yarn start:react &
 
-      # 7. Esperar a que frontend responda
-      - name: Wait for frontend (React)
+      - name: Wait for frontend
         run: npx wait-on http://localhost:3000
 
-      # 8. Ejecutar pruebas unitarias
       - name: Run unit tests
         run: yarn test:unit
 
-      # 9. Ejecutar Cypress usando config de CI
       - name: Run Cypress tests
         env:
           CYPRESS_apiUrl: http://localhost:3001
         run: yarn cypress:run --config-file cypress.ci.config.js
 
-      # 10. Subir capturas de Cypress si fallan
       - name: Upload artifacts (screenshots)
         if: always()
         uses: actions/upload-artifact@v4
@@ -62,7 +51,7 @@ jobs:
           name: cypress-artifacts
           path: cypress/screenshots
 
-      # 11. Análisis SonarCloud
+      # ✅ AQUÍ VA SONARCLOUD — ESTO ES LO QUE ME PEDISTE
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
         env:
